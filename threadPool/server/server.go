@@ -2,9 +2,9 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
-	"time"
 )
 
 type Job struct {
@@ -103,21 +103,25 @@ func (server *Server) Run() {
 		}
 
 		pool.AddJob(client)
-		// go client.handleRequest()
 	}
 }
 
 func handleRequest(client Client) {
+	log.Println(client.conn.RemoteAddr())
+	defer client.conn.Close()
 	for {
-		log.Println(client.conn.RemoteAddr())
 		var buf []byte = make([]byte, 1000)
 		_, err := client.conn.Read(buf)
 		if err != nil {
-			client.conn.Close()
-			log.Fatal(err)
+			if err == io.EOF {
+				log.Printf("Client disconnected: %s", client.conn.RemoteAddr())
+			}
+			break
 		}
-		// process
-		time.Sleep(time.Second * 10)
-		client.conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\nMessage received.\n"))
+
+		if _, err := client.conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\nMessage received.\n")); err != nil {
+			log.Println("error write: ", err)
+			return
+		}
 	}
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"redisClone/server"
+	"redisClone/threadPool/server"
 )
 
 func main() {
